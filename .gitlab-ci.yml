@@ -1,0 +1,9 @@
+stages:
+  - test
+
+test_my_runner:
+  stage: test
+  script:
+    - echo "Hello from my Ubuntu EC2 Instance!"
+    - python3 --version
+    - whoami
