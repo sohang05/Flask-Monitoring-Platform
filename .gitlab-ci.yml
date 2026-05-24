@@ -3,8 +3,8 @@ stages:
   - deploy
 
 variables:
-  IMAGE_NAME: "flask-app"
-  IMAGE_TAG: "latest"
+  IMAGE_NAME: flask-app
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
   ECR_REGISTRY: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
@@ -12,27 +12,26 @@ variables:
 build:
   stage: build
 
-  image:
-    name: amazon/aws-cli:latest
-    entrypoint: [""]
+  image: amazon/aws-cli:latest
 
   services:
-    - name: docker:24-dind
-      command: ["--tls=false"]
+    - docker:24-dind
 
-  before_script:
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+
+  script:
     - yum install -y docker
-
-    - docker version
-
-    - aws --version
 
     - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" |
       docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
-  script:
     - docker build -t $IMAGE_NAME:$IMAGE_TAG -f app/Dockerfile app/
-    - docker tag $IMAGE_NAME:$IMAGE_TAG $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+
+    - docker tag $IMAGE_NAME:$IMAGE_TAG \
+      $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+
     - docker push $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
 
 deploy:
