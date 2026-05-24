@@ -12,7 +12,9 @@ variables:
 build:
   stage: build
 
-  image: amazon/aws-cli:latest
+  image:
+    name: amazon/aws-cli:latest
+    entrypoint: [""]
 
   services:
     - name: docker:24-dind
@@ -25,7 +27,8 @@ build:
 
     - aws --version
 
-    - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
+    - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" |
+      docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
   script:
     - docker build -t $IMAGE_NAME:$IMAGE_TAG .
