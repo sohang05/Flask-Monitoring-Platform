@@ -11,62 +11,50 @@ variables:
 
 build:
   stage: build
-
   image: amazon/aws-cli:latest
 
   services:
     - docker:24-dind
 
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - yum install -y docker
+    - docker version
+    - aws --version
 
   script:
-    - yum install -y docker
-
-    - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" |
-      docker login --username AWS --password-stdin "$ECR_REGISTRY"
+    - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
     - docker build -t $IMAGE_NAME:$IMAGE_TAG -f app/Dockerfile app/
 
-    - docker tag $IMAGE_NAME:$IMAGE_TAG \
-      $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+    - docker tag $IMAGE_NAME:$IMAGE_TAG $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
 
     - docker push $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
 
 deploy:
   stage: deploy
-
   image: ubuntu:22.04
 
   before_script:
     - apt-get update
-    - apt-get install -y openssh-client
-
+    - apt-get install -y openssh-client awscli
     - mkdir -p ~/.ssh
-
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
-
     - chmod 600 ~/.ssh/id_rsa
-
     - ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
 
   script:
     - |
-      ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << EOF
+      ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST "
+      aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY &&
 
-      aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+      docker pull $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG &&
 
-      docker pull $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
-
-      docker stop flask-app || true
-
-      docker rm flask-app || true
+      docker stop flask-app || true &&
+      docker rm flask-app || true &&
 
       docker run -d \
       --name flask-app \
       --restart unless-stopped \
       -p 80:5000 \
       $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
-
-      EOF
+      "
