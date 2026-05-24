@@ -3,27 +3,27 @@ stages:
   - deploy
 
 variables:
-  IMAGE_TAG: latest
-  ECR_REGISTRY: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-  IMAGE_NAME: flask-app
+  IMAGE_NAME: "flask-app"
+  IMAGE_TAG: "latest"
+  ECR_REGISTRY: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_TLS_CERTDIR: ""
 
 build:
   stage: build
 
-  image: docker:24
+  image: amazon/aws-cli:latest
 
   services:
     - name: docker:24-dind
       command: ["--tls=false"]
 
   before_script:
-    - apk add --no-cache python3 py3-pip aws-cli
+    - yum install -y docker
 
-    - aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+    - docker version
 
-    - aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
-
-    - aws configure set region "$AWS_DEFAULT_REGION"
+    - aws --version
 
     - aws ecr get-login-password --region "$AWS_DEFAULT_REGION" | docker login --username AWS --password-stdin "$ECR_REGISTRY"
 
@@ -33,34 +33,31 @@ build:
     - docker tag $IMAGE_NAME:$IMAGE_TAG $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
 
     - docker push $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
-    
+
 deploy:
   stage: deploy
 
-  image: ubuntu:latest
+  image: ubuntu:22.04
 
   before_script:
-
-    - apt update
-
-    - apt install openssh-client -y
+    - apt-get update
+    - apt-get install -y openssh-client
 
     - mkdir -p ~/.ssh
 
-    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
 
     - chmod 600 ~/.ssh/id_rsa
 
     - ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
 
   script:
-
     - |
-      ssh $EC2_USER@$EC2_HOST "
+      ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << EOF
 
-      aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $ECR_REGISTRY
+      aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
 
-      docker pull $ECR_REGISTRY/$IMAGE_NAME:latest
+      docker pull $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
 
       docker stop flask-app || true
 
@@ -68,6 +65,8 @@ deploy:
 
       docker run -d \
       --name flask-app \
+      --restart unless-stopped \
       -p 80:5000 \
-      $ECR_REGISTRY/$IMAGE_NAME:latest
-      "
+      $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+
+      EOF
