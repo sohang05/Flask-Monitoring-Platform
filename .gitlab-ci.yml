@@ -45,33 +45,30 @@ deploy:
     - ssh-keyscan -H $EC2_HOST >> ~/.ssh/known_hosts
 
   script:
-    - |
-      ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST "
+  - |
+    ssh -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST "
 
-      aws ecr get-login-password --region $AWS_DEFAULT_REGION | \
-      docker login --username AWS --password-stdin $ECR_REGISTRY
+    aws ecr get-login-password --region $AWS_DEFAULT_REGION | \
+    docker login --username AWS --password-stdin $ECR_REGISTRY
 
-      docker pull $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+    docker pull $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
 
-      # Remove old app containers
-      docker ps -q --filter publish=80 | xargs -r docker stop
-      docker ps -aq --filter publish=80 | xargs -r docker rm
+    docker stop flask-app || true
+    docker rm flask-app || true
 
-      docker stop flask-app || true
-      docker rm flask-app || true
+    docker run -d \
+      --name flask-app \
+      --restart unless-stopped \
+      -p 80:5000 \
+      $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
 
-      docker run -d \
-        --name flask-app \
-        --restart unless-stopped \
-        -p 80:5000 \
-        $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
-
-      # setup/update monitoring
-      cd ~/flask-monitoring-app
-
+    if [ -d /home/ubuntu/flask-monitoring-app ]; then
+      cd /home/ubuntu/flask-monitoring-app
       git pull || true
 
       cd monitoring
-
       docker-compose up -d
-      "
+    else
+      echo 'Monitoring repo not present; skipping'
+    fi
+    "
