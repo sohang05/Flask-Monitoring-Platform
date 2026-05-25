@@ -66,18 +66,12 @@ deploy:
         -p 80:5000 \
         $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
 
-      # ----- Monitoring section -----
+      # setup/update monitoring
+      cd ~/flask-monitoring-app
 
-      if [ ! -d flask-monitoring-app ]; then
-          git clone https://gitlab.com/sohan-gurav/flask-monitoring-app.git || true
-      fi
-
-      cd flask-monitoring-app
-
-      git pull
+      git pull || true
 
       cd monitoring
 
-      docker compose up -d
-
+      docker-compose up -d
       "
