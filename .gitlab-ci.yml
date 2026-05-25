@@ -69,7 +69,7 @@ deploy:
       # ----- Monitoring section -----
 
       if [ ! -d flask-monitoring-app ]; then
-          git clone https://gitlab.com/<YOUR_USERNAME>/flask-monitoring-app.git
+          git clone https://gitlab.com/sohan-gurav/flask-monitoring-app.git
       fi
 
       cd flask-monitoring-app
