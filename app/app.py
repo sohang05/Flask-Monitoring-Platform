@@ -1,5 +1,5 @@
 from flask import Flask
-from prometheus_client import Counter, generate_latest
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from flask import Response
 
 app = Flask(__name__)
@@ -18,7 +18,7 @@ def home():
 def metrics():
     return Response(
         generate_latest(),
-        mimetype="text/plain"
+        mimetype=CONTENT_TYPE_LATEST
     )
 
 if __name__=="__main__":
