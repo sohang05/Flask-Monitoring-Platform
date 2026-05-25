@@ -53,7 +53,7 @@ deploy:
 
       docker pull $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
 
-      # Remove old containers using port 80
+      # Remove old app containers
       docker ps -q --filter publish=80 | xargs -r docker stop
       docker ps -aq --filter publish=80 | xargs -r docker rm
 
@@ -65,4 +65,19 @@ deploy:
         --restart unless-stopped \
         -p 80:5000 \
         $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
+
+      # ----- Monitoring section -----
+
+      if [ ! -d flask-monitoring-app ]; then
+          git clone https://gitlab.com/<YOUR_USERNAME>/flask-monitoring-app.git
+      fi
+
+      cd flask-monitoring-app
+
+      git pull
+
+      cd monitoring
+
+      docker compose up -d
+
       "
