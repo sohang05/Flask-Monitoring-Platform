@@ -1,8 +1,10 @@
 from flask import Flask
 from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 from flask import Response
-
+from prometheus_flask_exporter import PrometheusMetrics
 app = Flask(__name__)
+
+metrics = PrometheusMetrics(app)
 
 REQUEST_COUNT = Counter(
     'app_requests_total',
