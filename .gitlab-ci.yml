@@ -67,15 +67,8 @@ deploy:
         $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
 
       # ---- Monitoring deployment ----
+      cd ~/flask-monitoring-app/monitoring
 
-      cd ~/flask-monitoring-app
-
-      git pull || true
-
-      cd monitoring
-
-      docker-compose pull || true
-
-      docker-compose up -d
+      docker compose up -d || docker-compose up -d
 
       "
