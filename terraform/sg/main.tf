@@ -6,7 +6,8 @@ resource "aws_security_group" "allow_ssh_http" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.my_ip]
+    description = "SSH"
+    cidr_blocks=["0.0.0.0/0"]
   }
 
   egress {
@@ -17,34 +18,41 @@ resource "aws_security_group" "allow_ssh_http" {
   }
 
   ingress {
-    from_port=80
-    to_port=80
-    protocol="tcp"
-
-    cidr_blocks=[var.my_ip]
+    from_port   = 8080
+    to_port     = 8080
+    protocol    = "tcp"
+    description = "cAdvisor"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
-    description="Flask App"
-
-    from_port=5000
-    to_port=5000
-    protocol="tcp"
-
-    cidr_blocks=["0.0.0.0/0"]
+    description = "Flask App"
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks= ["0.0.0.0/0"]
   }
 
   ingress {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks=[var.my_ip]
+    cidr_blocks = [var.my_ip]
   }
 
   ingress {
-    from_port   = 9000
-    to_port     = 9000
+    from_port   = 3000
+    to_port     = 3000
     protocol    = "tcp"
-    cidr_blocks=[var.my_ip]
+    description = "Grafana"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 9090
+    to_port     = 9090
+    protocol    = "tcp"
+    description = "Prometheus"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 }
