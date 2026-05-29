@@ -1,6 +1,6 @@
 # Flask Monitoring & Logging Platform
 
-Designed and implemented a cloud-native Flask monitoring platform with automated CI/CD pipelines using GitLab CI/CD and Docker. Built automated deployment workflows to AWS EC2 through AWS ECR and integrated Prometheus, Grafana, Node Exporter, and cAdvisor for infrastructure, application, and container-level monitoring. Managed monitoring services using Docker Compose and followed Infrastructure as Code practices.
+<p align="justify"> Designed and implemented a cloud-native Flask monitoring platform with automated CI/CD pipelines using GitLab CI/CD and Docker. Built automated deployment workflows to AWS EC2 through AWS ECR and integrated Prometheus, Grafana, Node Exporter, and cAdvisor for infrastructure, application, and container-level monitoring. Managed monitoring services using Docker Compose and followed Infrastructure as Code practices.</p>
 
 ---
 
